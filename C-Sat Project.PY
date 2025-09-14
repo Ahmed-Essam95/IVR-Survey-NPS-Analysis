@@ -49,8 +49,8 @@ team_select = ""
 team_lives = 0
 while team_lives != 3 :
     print(f"\nPlease Choose 1 Or 2\n"
-          f"1: CC Consumer Billing.\n"
-          f"2: CC High Usage.")
+          f"1: X \n"
+          f"2: Y ")
 
     team_select = str(input("\nEnter Your Choice : "))
 
@@ -60,9 +60,9 @@ while team_lives != 3 :
 
     else:
         if team_select == "1" :
-            team_select = "CC Consumer Billing"
+            team_select = "X"
         elif team_select == "2" :
-            team_select = "CC High Usage"
+            team_select = "Y"
 
         break
 
@@ -250,3 +250,4 @@ print("Done")
 # for key, value in ahmed.items():
 #     huge_df[key] = value
 #     print(f"{key} -> {value}")
+
