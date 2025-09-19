@@ -8,7 +8,7 @@ import openpyxl as excel
 
 current_directory = os.getcwd()
 
-sheet_path = f"{current_directory}\\CN7736 - IVR Retail & CC Survey V3.xlsx"
+sheet_path = f"{current_directory}\\c-sat sheet name.xlsx"
 
 
 path_lives = 0
@@ -22,7 +22,7 @@ while path_lives != 3  :
 
     else:
         path_lives += 1
-        print("\nExcel file ( CN7736 - IVR Retail & CC Survey V3 ) doesn't exist.")
+        print("\nExcel file ( c-sat sheet name ) doesn't exist.")
         input(f"\nAdd the file and press Enter to check again.\n")
         continue
 
@@ -49,8 +49,8 @@ team_select = ""
 team_lives = 0
 while team_lives != 3 :
     print(f"\nPlease Choose 1 Or 2\n"
-          f"1: X \n"
-          f"2: Y ")
+          f"1: team name.\n"
+          f"2: team name.")
 
     team_select = str(input("\nEnter Your Choice : "))
 
@@ -60,9 +60,9 @@ while team_lives != 3 :
 
     else:
         if team_select == "1" :
-            team_select = "X"
+            team_select = "team name"
         elif team_select == "2" :
-            team_select = "Y"
+            team_select = "team name"
 
         break
 
@@ -91,19 +91,25 @@ while month_lives != 3 :
 10 - October
 11 - November
 12 - December """)
-    month_select = input("\nPlease Enter Month Number : ")
 
-    if not isinstance(month_select,int) :
-        print(f"{month_select}, Invalid Choice, Please Select from 1 to 12")
+    month_select = input("\nPlease Enter Month Number (1-12): ")
+
+    if not month_select.isdigit() :
+        print("❌ Please enter a valid number (digits only).")
         month_lives += 1
         continue
 
-    if month_select not in [1,2,3,4,5,6,7,8,9,10,11,12]:
-        print(f"{month_select}, Invalid Choice, Please Select from 1 to 12")
+    month_select = int(month_select)
+
+
+    # Check if it's within valid range
+    if month_select not in range(1, 13) :
+        print(f"❌ {month_select} is not a valid month. Please select a number from 1 to 12.")
         month_lives += 1
         continue
 
     else:
+        # Valid input
         break
 
 
@@ -113,18 +119,98 @@ if month_lives == 3:
 
 
 # Clean
-print(f"Loading Data, will take around 2 minutes")
-read_file = pd.read_excel(sheet_path)
+print(f"Loading Data, will take Several minutes")
+start_time = time.time()
+
+
+import warnings
+warnings.simplefilter("ignore", UserWarning)
+
+
+# -----------------------------------------------------
+# -----------------------------------------------------
+
+# Load the Excel file
+excel_file = pd.ExcelFile(sheet_path)
+
+# Get the list of sheet names
+sheet_list = excel_file.sheet_names
+
+# Count the sheets
+# sheet_count = len(sheet_list)
+
+
+# -------------------------------------------
+# -------------------------------------------
+
+
+
+sheets_df = []
+
+
+file_reader = pd.read_excel(sheet_path,  sheet_name=None , header=None )  # Read all sheets once
+
+sheet_sequence = 0
+
+
+for key,value in file_reader.items() :
+# for  single_sheet in file_reader :
+
+
+    sheet_sequence += 1
+
+    if sheet_sequence == 1 :
+        # sheets_df.append(pd.read_excel(sheet_path, sheet_name=single_sheet))
+
+
+        value.columns = value.loc[0]
+        value = value[1:].reset_index(drop=True)
+
+        sheets_df.append(value)
+
+
+    elif sheet_sequence > 1 :
+      # next_sheet = pd.read_excel(sheet_path, sheet_name=single_sheet, header=None )
+      # col_limitation = len( next_sheet.columns )
+      # next_sheet.columns = sheets_df[0].columns[  :   col_limitation]
+      # sheets_df.append(next_sheet)
+
+
+        sheet_one_col = sheets_df[0].columns
+
+        value.columns = sheet_one_col[  :  len(value.columns)   ]
+
+        sheets_df.append(value)
+
+
+
+
+
+# Concatenate them
+read_file = pd.concat(sheets_df, ignore_index=True)
+
+read_file["INSERTION_DT"] = pd.to_datetime( read_file["INSERTION_DT"]  , errors='coerce')
+
+# df1 = pd.read_excel('your_file.xlsx', sheet_name='Sheet1')
+# df2 = pd.read_excel('your_file.xlsx', sheet_name='Sheet2')
+# combined_df = pd.concat([df1, df2], ignore_index=True)
+
+
+# -----------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
+
 print(f"Data Loaded....")
 # Clean
 
 sat_df = read_file.copy()
 
-df_columns = ["INSERTION_DT","Q1_ANSWER: TNPS","No_of_Answered_Questions","Agent_Id_", "OWNER_TEAM","Survey_Identifier"]
+
+df_columns = ["INSERTION_DT","Q1_ANSWER: TNPS","No_of_Answered_Questions","Agent_Id_", "OWNER_TEAM" ]
 df_rows = sat_df["OWNER_TEAM"] ==  team_select
 
 
-sat_df = sat_df.loc[ df_rows , df_columns]
+sat_df = sat_df.loc[ df_rows , df_columns ]
+
 
 sat_df["INSERTION_DT"] = sat_df["INSERTION_DT"].dt.month
 
@@ -196,8 +282,9 @@ def calc_machine(each_user) :
 
         components_list.append(total_answered)
 
-        NPS_Calculation = f"{ ((promoters-detractors) / total_answered) * 100 }%"
-        components_list.append(NPS_Calculation)
+        NPS_Calculation = f"{ ((promoters-detractors) / total_answered) * 100}"[:5]
+        components_list.append(f"{NPS_Calculation}%")
+
 
 
         return components_list
@@ -239,7 +326,7 @@ for user_agent in unique_agents :
 saved_workbook.save(saved_sheet_path)
 
 
-
+print(f"Performance Duration = { time.time() - start_time }")
 print("Done")
 
 
